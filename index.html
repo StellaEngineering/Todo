@@ -121,10 +121,21 @@
         const addButton = document.querySelector('.add-button');
         const todoList = document.querySelector('.todo-list');
 
+        // 페이지 로드 시 로컬 스토리지에서 토큰 불러오기
+        window.addEventListener('load', async () => {
+            const storedToken = localStorage.getItem('githubToken');
+            if (storedToken) {
+                state.token = storedToken;
+                document.getElementById('auth-section').style.display = 'none';
+                await createOrLoadGist();
+            }
+        });
+
         document.getElementById('auth-button').addEventListener('click', async () => {
             const tokenInput = document.getElementById('github-token');
             state.token = tokenInput.value.trim();
             if (state.token) {
+                localStorage.setItem('githubToken', state.token); // 로컬 스토리지에 토큰 저장
                 tokenInput.value = '';
                 document.getElementById('auth-section').style.display = 'none';
                 await createOrLoadGist();
