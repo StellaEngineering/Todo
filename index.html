@@ -128,13 +128,20 @@
             const dday = calculateDday(dateInput.value);
             ddaySpan.textContent = dday;
             
-            // D-day 상태에 따른 스타일 변경
+            // 기본 클래스 초기화
             ddaySpan.className = 'dday';
-            const diffDays = parseInt(dday.replace('D-', ''));
+            
+            // D-day 상태에 따른 스타일 변경
             if (dday === 'D-Day') {
+                // 당일인 경우
                 ddaySpan.classList.add('today');
-            } else if (!isNaN(diffDays) && diffDays <= 3 && diffDays > 0) {
-                ddaySpan.classList.add('urgent');
+            } else {
+                const days = parseInt(dday.replace('D-', '').replace('D+', ''));
+                if (!isNaN(days) && days > 0 && days <= 3) {
+                    // 3일 이내인 경우
+                    ddaySpan.classList.add('urgent');
+                }
+                // 3일 이상인 경우는 기본 스타일 유지
             }
         }
 
