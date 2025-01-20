@@ -154,41 +154,76 @@
             }
         }
 
+        // 로컬 스토리지에서 데이터 불러오기
+        function loadTodos() {
+            const todos = JSON.parse(localStorage.getItem('todos') || '[]');
+            todos.forEach(todo => {
+                const li = createTodoItem(todo.text);
+                const dateInput = li.querySelector('.todo-date');
+                const checkbox = li.querySelector('input[type="checkbox"]');
+                
+                if (todo.date) {
+                    dateInput.value = todo.date;
+                    updateDday(dateInput, li.querySelector('.dday'));
+                }
+                
+                if (todo.completed) {
+                    checkbox.checked = true;
+                    li.classList.add('completed');
+                }
+                
+                todoList.appendChild(li);
+            });
+        }
+
+        // 로컬 스토리지에 데이터 저장
+        function saveTodos() {
+            const todos = [];
+            document.querySelectorAll('.todo-item').forEach(li => {
+                todos.push({
+                    text: li.querySelector('.todo-text').textContent,
+                    date: li.querySelector('.todo-date').value,
+                    completed: li.querySelector('input[type="checkbox"]').checked
+                });
+            });
+            localStorage.setItem('todos', JSON.stringify(todos));
+        }
+
         function createTodoItem(text) {
             const li = document.createElement('li');
             li.className = 'todo-item';
 
-            // 텍스트 영역 (수정 가능)
             const todoText = document.createElement('div');
             todoText.className = 'todo-text';
             todoText.contentEditable = true;
             todoText.textContent = text;
+            todoText.addEventListener('input', saveTodos);
 
-            // D-day 표시 span
             const ddaySpan = document.createElement('span');
             ddaySpan.className = 'dday';
 
-            // 날짜 선택
             const dateInput = document.createElement('input');
             dateInput.type = 'date';
             dateInput.className = 'todo-date';
             dateInput.addEventListener('change', () => {
                 updateDday(dateInput, ddaySpan);
+                saveTodos();
             });
 
-            // 완료 체크박스
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.addEventListener('change', () => {
                 li.classList.toggle('completed', checkbox.checked);
+                saveTodos();
             });
 
-            // 삭제 버튼
             const deleteButton = document.createElement('button');
             deleteButton.textContent = '삭제';
-            deleteButton.onclick = () => li.remove();
+            deleteButton.onclick = () => {
+                li.remove();
+                saveTodos();
+            };
 
-            // 액션 컨테이너
             const actions = document.createElement('div');
             actions.className = 'todo-actions';
             actions.appendChild(ddaySpan);
@@ -204,22 +239,25 @@
         function addTodo() {
             const text = todoInput.value.trim();
             if (text) {
-                todoList.appendChild(createTodoItem(text));
+                const li = createTodoItem(text);
+                todoList.appendChild(li);
                 todoInput.value = '';
+                saveTodos();
             }
         }
 
-        // 엔터키 이벤트
         todoInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 addTodo();
             }
         });
 
-        // 버튼 클릭 이벤트
         addButton.addEventListener('click', addTodo);
 
-        // 기존 날짜들의 D-day 업데이트
+        // 페이지 로드 시 저장된 데이터 불러오기
+        loadTodos();
+
+        // D-day 자동 업데이트
         setInterval(() => {
             document.querySelectorAll('.todo-date').forEach(dateInput => {
                 if (dateInput.value) {
@@ -227,7 +265,8 @@
                     updateDday(dateInput, ddaySpan);
                 }
             });
-        }, 1000 * 60 * 60); // 1시간마다 업데이트
+            saveTodos();
+        }, 1000 * 60 * 60);
     </script>
 </body>
 </html> 
