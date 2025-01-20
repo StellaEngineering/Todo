@@ -48,31 +48,6 @@
         .add-button:hover {
             background: #45a049;
         }
-        .todo-text {
-            flex-grow: 1;
-            margin-right: 10px;
-            padding: 5px;
-            border: 1px solid transparent;
-        }
-        .todo-text:focus {
-            border-color: #ddd;
-            outline: none;
-        }
-        .todo-date {
-            padding: 5px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            margin-right: 10px;
-        }
-        .todo-item.completed .todo-text {
-            text-decoration: line-through;
-            color: #888;
-        }
-        .todo-actions {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
         .dday {
             background: #e0ffe0;
             padding: 2px 6px;
@@ -89,24 +64,101 @@
             background: #ffe0e0;
             color: #ff0000;
         }
+        #auth-section {
+            margin-bottom: 20px;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 4px;
+        }
+        #github-token {
+            width: 300px;
+            padding: 8px;
+            margin-right: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        #auth-button {
+            padding: 8px 15px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
     <div class="todo-container">
         <h1>Todo 리스트 - 아이원이엠</h1>
+        
+        <div id="auth-section">
+            <input type="password" id="github-token" placeholder="GitHub Token을 입력하세요">
+            <button id="auth-button">토큰 설정</button>
+        </div>
+
+        <div id="gist-info" style="display: none;">
+            <strong>Gist ID:</strong> <span id="current-gist-id">없음</span>
+        </div>
+
         <div>
             <input type="text" class="todo-input" placeholder="할 일을 입력하세요">
             <button class="add-button">추가</button>
         </div>
-        <ul class="todo-list">
-            <!-- 여기에 Todo 항목들이 추가됩니다 -->
-        </ul>
+        <ul class="todo-list"></ul>
     </div>
 
     <script>
+        const state = {
+            token: '',
+            gistId: ''
+        };
+
         const todoInput = document.querySelector('.todo-input');
         const addButton = document.querySelector('.add-button');
         const todoList = document.querySelector('.todo-list');
+
+        document.getElementById('auth-button').addEventListener('click', async () => {
+            const tokenInput = document.getElementById('github-token');
+            state.token = tokenInput.value.trim();
+            if (state.token) {
+                tokenInput.value = '';
+                document.getElementById('auth-section').style.display = 'none';
+                await createOrLoadGist();
+            }
+        });
+
+        async function createOrLoadGist() {
+            try {
+                const response = await fetch('https://api.github.com/gists', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `token ${state.token}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        description: 'Todo List Data',
+                        public: false,
+                        files: {
+                            'todos.json': {
+                                content: JSON.stringify([])
+                            }
+                        }
+                    })
+                });
+                const data = await response.json();
+                state.gistId = data.id;
+                
+                document.getElementById('gist-info').style.display = 'block';
+                document.getElementById('current-gist-id').textContent = state.gistId;
+                
+                alert('새로운 Gist ID가 생성되었습니다: ' + state.gistId);
+                
+                await loadTodos();
+            } catch (error) {
+                console.error('Error:', error);
+                alert('오류가 발생했습니다: ' + error.message);
+            }
+        }
 
         function calculateDday(targetDate) {
             const today = new Date();
@@ -115,7 +167,6 @@
             const target = new Date(targetDate);
             target.setHours(0, 0, 0, 0);
             
-            // 날짜를 YYYY-MM-DD 형식으로 변환하여 비교
             const todayStr = today.toISOString().split('T')[0];
             const targetStr = target.toISOString().split('T')[0];
             
@@ -137,56 +188,16 @@
             const dday = calculateDday(dateInput.value);
             ddaySpan.textContent = dday;
             
-            // 기본 클래스 초기화
             ddaySpan.className = 'dday';
             
-            // D-day 상태에 따른 스타일 변경
             if (dday === 'D-Day') {
-                // 당일인 경우
                 ddaySpan.classList.add('today');
             } else {
                 const days = parseInt(dday.replace('D-', '').replace('D+', ''));
                 if (!isNaN(days) && days > 0 && days <= 3) {
-                    // 3일 이내인 경우
                     ddaySpan.classList.add('urgent');
                 }
-                // 3일 이상인 경우는 기본 스타일 유지
             }
-        }
-
-        // 로컬 스토리지에서 데이터 불러오기
-        function loadTodos() {
-            const todos = JSON.parse(localStorage.getItem('todos') || '[]');
-            todos.forEach(todo => {
-                const li = createTodoItem(todo.text);
-                const dateInput = li.querySelector('.todo-date');
-                const checkbox = li.querySelector('input[type="checkbox"]');
-                
-                if (todo.date) {
-                    dateInput.value = todo.date;
-                    updateDday(dateInput, li.querySelector('.dday'));
-                }
-                
-                if (todo.completed) {
-                    checkbox.checked = true;
-                    li.classList.add('completed');
-                }
-                
-                todoList.appendChild(li);
-            });
-        }
-
-        // 로컬 스토리지에 데이터 저장
-        function saveTodos() {
-            const todos = [];
-            document.querySelectorAll('.todo-item').forEach(li => {
-                todos.push({
-                    text: li.querySelector('.todo-text').textContent,
-                    date: li.querySelector('.todo-date').value,
-                    completed: li.querySelector('input[type="checkbox"]').checked
-                });
-            });
-            localStorage.setItem('todos', JSON.stringify(todos));
         }
 
         function createTodoItem(text) {
@@ -197,7 +208,6 @@
             todoText.className = 'todo-text';
             todoText.contentEditable = true;
             todoText.textContent = text;
-            todoText.addEventListener('input', saveTodos);
 
             const ddaySpan = document.createElement('span');
             ddaySpan.className = 'dday';
@@ -207,22 +217,17 @@
             dateInput.className = 'todo-date';
             dateInput.addEventListener('change', () => {
                 updateDday(dateInput, ddaySpan);
-                saveTodos();
             });
 
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.addEventListener('change', () => {
                 li.classList.toggle('completed', checkbox.checked);
-                saveTodos();
             });
 
             const deleteButton = document.createElement('button');
             deleteButton.textContent = '삭제';
-            deleteButton.onclick = () => {
-                li.remove();
-                saveTodos();
-            };
+            deleteButton.onclick = () => li.remove();
 
             const actions = document.createElement('div');
             actions.className = 'todo-actions';
@@ -239,10 +244,8 @@
         function addTodo() {
             const text = todoInput.value.trim();
             if (text) {
-                const li = createTodoItem(text);
-                todoList.appendChild(li);
+                todoList.appendChild(createTodoItem(text));
                 todoInput.value = '';
-                saveTodos();
             }
         }
 
@@ -253,20 +256,6 @@
         });
 
         addButton.addEventListener('click', addTodo);
-
-        // 페이지 로드 시 저장된 데이터 불러오기
-        loadTodos();
-
-        // D-day 자동 업데이트
-        setInterval(() => {
-            document.querySelectorAll('.todo-date').forEach(dateInput => {
-                if (dateInput.value) {
-                    const ddaySpan = dateInput.parentElement.querySelector('.dday');
-                    updateDday(dateInput, ddaySpan);
-                }
-            });
-            saveTodos();
-        }, 1000 * 60 * 60);
     </script>
 </body>
-</html> 
+</html>
