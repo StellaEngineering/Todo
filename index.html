@@ -73,6 +73,22 @@
             align-items: center;
             gap: 5px;
         }
+        .dday {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            margin-right: 10px;
+            color: #666;
+        }
+        .dday.urgent {
+            background: #ffe0e0;
+            color: #ff4444;
+        }
+        .dday.today {
+            background: #e0ffe0;
+            color: #44aa44;
+        }
     </style>
 </head>
 <body>
@@ -92,6 +108,36 @@
         const addButton = document.querySelector('.add-button');
         const todoList = document.querySelector('.todo-list');
 
+        function calculateDday(targetDate) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const target = new Date(targetDate);
+            const diffTime = target - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays < 0) {
+                return `D+${Math.abs(diffDays)}`;
+            } else if (diffDays === 0) {
+                return 'D-Day';
+            } else {
+                return `D-${diffDays}`;
+            }
+        }
+
+        function updateDday(dateInput, ddaySpan) {
+            const dday = calculateDday(dateInput.value);
+            ddaySpan.textContent = dday;
+            
+            // D-day 상태에 따른 스타일 변경
+            ddaySpan.className = 'dday';
+            const diffDays = parseInt(dday.replace('D-', ''));
+            if (dday === 'D-Day') {
+                ddaySpan.classList.add('today');
+            } else if (!isNaN(diffDays) && diffDays <= 3 && diffDays > 0) {
+                ddaySpan.classList.add('urgent');
+            }
+        }
+
         function createTodoItem(text) {
             const li = document.createElement('li');
             li.className = 'todo-item';
@@ -102,10 +148,17 @@
             todoText.contentEditable = true;
             todoText.textContent = text;
 
+            // D-day 표시 span
+            const ddaySpan = document.createElement('span');
+            ddaySpan.className = 'dday';
+
             // 날짜 선택
             const dateInput = document.createElement('input');
             dateInput.type = 'date';
             dateInput.className = 'todo-date';
+            dateInput.addEventListener('change', () => {
+                updateDday(dateInput, ddaySpan);
+            });
 
             // 완료 체크박스
             const checkbox = document.createElement('input');
@@ -122,6 +175,7 @@
             // 액션 컨테이너
             const actions = document.createElement('div');
             actions.className = 'todo-actions';
+            actions.appendChild(ddaySpan);
             actions.appendChild(dateInput);
             actions.appendChild(checkbox);
             actions.appendChild(deleteButton);
@@ -148,6 +202,16 @@
 
         // 버튼 클릭 이벤트
         addButton.addEventListener('click', addTodo);
+
+        // 기존 날짜들의 D-day 업데이트
+        setInterval(() => {
+            document.querySelectorAll('.todo-date').forEach(dateInput => {
+                if (dateInput.value) {
+                    const ddaySpan = dateInput.parentElement.querySelector('.dday');
+                    updateDday(dateInput, ddaySpan);
+                }
+            });
+        }, 1000 * 60 * 60); // 1시간마다 업데이트
     </script>
 </body>
 </html> 
