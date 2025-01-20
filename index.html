@@ -60,5 +60,32 @@
             <!-- 여기에 Todo 항목들이 추가됩니다 -->
         </ul>
     </div>
+
+    <script>
+        const todoInput = document.querySelector('.todo-input');
+        const addButton = document.querySelector('.add-button');
+        const todoList = document.querySelector('.todo-list');
+
+        function addTodo() {
+            const text = todoInput.value.trim();
+            if (text) {
+                const li = document.createElement('li');
+                li.className = 'todo-item';
+                li.textContent = text;
+                todoList.appendChild(li);
+                todoInput.value = '';
+            }
+        }
+
+        // 엔터키 이벤트 추가
+        todoInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addTodo();
+            }
+        });
+
+        // 버튼 클릭 이벤트
+        addButton.addEventListener('click', addTodo);
+    </script>
 </body>
 </html> 
