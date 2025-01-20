@@ -7,7 +7,7 @@
     <style>
         body {
             font-family: 'Arial', sans-serif;
-            max-width: 600px;
+            max-width: 800px;
             margin: 0 auto;
             padding: 20px;
         }
@@ -18,7 +18,7 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .todo-input {
-            width: 100%;
+            width: 70%;
             padding: 10px;
             margin-bottom: 10px;
             border: 1px solid #ddd;
@@ -35,6 +35,7 @@
             border-radius: 4px;
             display: flex;
             justify-content: space-between;
+            align-items: center;
         }
         .add-button {
             background: #4CAF50;
@@ -46,6 +47,31 @@
         }
         .add-button:hover {
             background: #45a049;
+        }
+        .todo-text {
+            flex-grow: 1;
+            margin-right: 10px;
+            padding: 5px;
+            border: 1px solid transparent;
+        }
+        .todo-text:focus {
+            border-color: #ddd;
+            outline: none;
+        }
+        .todo-date {
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+        .todo-item.completed .todo-text {
+            text-decoration: line-through;
+            color: #888;
+        }
+        .todo-actions {
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
     </style>
 </head>
@@ -66,18 +92,54 @@
         const addButton = document.querySelector('.add-button');
         const todoList = document.querySelector('.todo-list');
 
+        function createTodoItem(text) {
+            const li = document.createElement('li');
+            li.className = 'todo-item';
+
+            // 텍스트 영역 (수정 가능)
+            const todoText = document.createElement('div');
+            todoText.className = 'todo-text';
+            todoText.contentEditable = true;
+            todoText.textContent = text;
+
+            // 날짜 선택
+            const dateInput = document.createElement('input');
+            dateInput.type = 'date';
+            dateInput.className = 'todo-date';
+
+            // 완료 체크박스
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.addEventListener('change', () => {
+                li.classList.toggle('completed', checkbox.checked);
+            });
+
+            // 삭제 버튼
+            const deleteButton = document.createElement('button');
+            deleteButton.textContent = '삭제';
+            deleteButton.onclick = () => li.remove();
+
+            // 액션 컨테이너
+            const actions = document.createElement('div');
+            actions.className = 'todo-actions';
+            actions.appendChild(dateInput);
+            actions.appendChild(checkbox);
+            actions.appendChild(deleteButton);
+
+            li.appendChild(todoText);
+            li.appendChild(actions);
+            return li;
+        }
+
         function addTodo() {
             const text = todoInput.value.trim();
             if (text) {
-                const li = document.createElement('li');
-                li.className = 'todo-item';
-                li.textContent = text;
-                todoList.appendChild(li);
+                todoList.appendChild(createTodoItem(text));
                 todoInput.value = '';
             }
         }
 
-        // 엔터키 이벤트 추가
+        // 엔터키 이벤트
         todoInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 addTodo();
