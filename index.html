@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>할일 관리</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>할일 목록</h1>
+        <div class="input-section">
+            <input type="text" id="todoInput" placeholder="할일을 입력하세요" onkeypress="handleKeyPress(event)">
+            <button onclick="addTodo()">추가</button>
+        </div>
+        
+        <div class="lists-container">
+            <div class="active-todos">
+                <h2>진행중인 할일</h2>
+                <ul id="todoList"></ul>
+            </div>
+            
+            <div class="completed-todos">
+                <h2>완료된 할일</h2>
+                <ul id="completedList"></ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 날짜 선택을 위한 input 요소 (숨김) -->
+    <input type="date" id="dateSelector" style="display: none;">
+    <script src="script.js"></script>
+</body>
+</html> 
